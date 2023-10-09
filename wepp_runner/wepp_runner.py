@@ -26,7 +26,7 @@ from .status_messenger import StatusMessenger
 _thisdir = os.path.dirname(__file__)
 _template_dir = _join(_thisdir, "templates")
 
-wepp_bin_dir = os.path.abspath(_join(_thisdir, "../", "bin"))
+wepp_bin_dir = os.path.abspath(_join(_thisdir, "bin"))
 
 linux_wepp_bin_opts = glob(_join(wepp_bin_dir, "wepp_*"))
 linux_wepp_bin_opts = [_split(p)[1] for p in linux_wepp_bin_opts]
