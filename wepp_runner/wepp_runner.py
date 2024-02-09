@@ -65,6 +65,9 @@ def ss_batch_hill_template_loader():
 def hill_template_loader():
     return _template_loader("hillslope.template")
 
+def reveg_hill_template_loader():
+    return _template_loader("reveg_hillslope.template")
+
 
 def ss_flowpath_template_loader():
     return _template_loader("ss_flowpath.template")
@@ -121,8 +124,11 @@ def make_ss_flowpath_run(fp, runs_dir):
         fp.write(s)
 
 
-def make_hillslope_run(wepp_id, sim_years, runs_dir):
-    _hill_template = hill_template_loader()
+def make_hillslope_run(wepp_id, sim_years, runs_dir, reveg=True):
+    if reveg:
+        _hill_template = reveg_hill_template_loader()
+    else:
+        _hill_template = hill_template_loader()
 
     s = _hill_template.format(wepp_id=wepp_id,
                               sim_years=sim_years)
