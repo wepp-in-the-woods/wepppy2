@@ -313,13 +313,14 @@ def run_watershed(runs_dir, wepp_bin=None, status_channel=None):
     if wepp_bin is not None:
         cmd = [os.path.abspath(os.path.join(wepp_bin_dir, wepp_bin))]
     else:
-        cmd = [os.path.abspath(_wepp)] 
+        cmd = [os.path.abspath(_wepp)]
 
     _run = open(os.path.join(runs_dir, 'pw0.run'))
     _stderr_fn = os.path.join(runs_dir, 'pw0.err')
     _log = open(_stderr_fn, 'w')
-    
-    p = subprocess.Popen(cmd, stdin=_run, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, 
+
+    # for python3.7+ universal_newlines=True -> text=True
+    p = subprocess.Popen(cmd, stdin=_run, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                          cwd=runs_dir, universal_newlines=True)
 
     # Streaming the output to _log and, if provided, to the status channel
@@ -328,10 +329,10 @@ def run_watershed(runs_dir, wepp_bin=None, status_channel=None):
         output = output.strip()
 
         if output != '':
-            _log.write(output)
+            _log.write(output + '\n')
             if status_channel:
                 StatusMessenger.publish(status_channel, output)
-    
+
     _run.close()
     _log.close()
 
