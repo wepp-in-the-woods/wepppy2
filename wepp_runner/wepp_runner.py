@@ -157,7 +157,7 @@ def make_ss_batch_hillslope_run(wepp_id, runs_dir, ss_batch_key, ss_batch_id):
         fp.write(s)
 
 
-def run_ss_batch_hillslope(wepp_id, runs_dir, wepp_bin=None, ss_batch_id=None):
+def run_ss_batch_hillslope(wepp_id, runs_dir, wepp_bin=None, ss_batch_id=None, status_channel=None):
     assert ss_batch_id is not None
     t0 = time()
 
@@ -191,7 +191,7 @@ def run_ss_batch_hillslope(wepp_id, runs_dir, wepp_bin=None, ss_batch_id=None):
                     % (wepp_id, log_fn))
 
 
-def run_hillslope(wepp_id, runs_dir, wepp_bin=None):
+def run_hillslope(wepp_id, runs_dir, wepp_bin=None, status_channel=None):
     t0 = time()
 
     if wepp_bin is not None:
@@ -222,7 +222,7 @@ def run_hillslope(wepp_id, runs_dir, wepp_bin=None):
     raise Exception(f'Error running wepp for wepp_id {wepp_id}\nSee {log_fn}')
 
 
-def run_flowpath(flowpath, runs_dir, wepp_bin=None):
+def run_flowpath(flowpath, runs_dir, wepp_bin=None, status_channel=None):
     t0 = time()
 
     if wepp_bin is not None:
@@ -342,7 +342,7 @@ def run_watershed(runs_dir, wepp_bin=None, status_channel=None):
     raise Exception(f'Error running wepp for watershed \nSee <a href="browse/wepp/runs/pw0.err">{_stderr_fn}</a>')
 
 
-def run_ss_batch_watershed(runs_dir, wepp_bin=None, ss_batch_id=None):
+def run_ss_batch_watershed(runs_dir, wepp_bin=None, ss_batch_id=None, status_channel=None):
     assert ss_batch_id is not None
 
     t0 = time()
