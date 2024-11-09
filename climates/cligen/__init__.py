@@ -1199,23 +1199,22 @@ class CligenStationsManager:
         # connect to sqlite3 db
         global _db, _stations_dir
         
+        _db = None
         _db_dir = _join(_thisdir, 'db')
-
-        if 'legacy' in str(version):
-            _db = _join(_db_dir, 'stations.db')
-            _stations_dir = _join(_db_dir, 'stations')
 
         if '2015' in str(version):
             _db = _join(_db_dir, '2015_stations.db')
             _stations_dir = _join(_db_dir, '2015_par_files')
-
-        if 'au' in str(version):
+        elif 'au' in str(version):
             _db = _join(_db_dir, 'au_stations.db')
             _stations_dir = _join(_db_dir, 'au_par_files')
-
-        if 'ghcn' in str(version):
+        elif 'ghcn' in str(version):
             _db = _join(_db_dir, 'ghcn_stations.db')
             _stations_dir = _join(_db_dir, 'GHCN_Intl_Stations', 'all_years')
+
+        if _db is None:
+            _db = _join(_db_dir, 'stations.db')
+            _stations_dir = _join(_db_dir, 'stations')
 
         conn = sqlite3.connect(_db)
         c = conn.cursor()
@@ -1235,6 +1234,9 @@ class CligenStationsManager:
 
         self.stations = \
             sorted(self.stations, key=lambda s: s.distance)
+
+    def get_stations_by_state(self, state):
+        return [station for station in self.stations if station.state == "state"]
 
     def get_closest_station(self, location):
         self.order_by_distance_to_location(location)
