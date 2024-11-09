@@ -1235,8 +1235,8 @@ class CligenStationsManager:
         self.stations = \
             sorted(self.stations, key=lambda s: s.distance)
 
-    def get_stations_by_state(self, state):
-        return [station for station in self.stations if station.state == "state"]
+    def get_stations_in_state(self, state):
+        return [station for station in self.stations if station.state == state]
 
     def get_closest_station(self, location):
         self.order_by_distance_to_location(location)
