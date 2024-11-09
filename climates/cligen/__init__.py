@@ -1435,8 +1435,8 @@ class Cligen:
         self.cligen52 = _join(_thisdir, "bin", "cligen52")
         self.cligen43 = _join(_thisdir, "bin", "cligen43")
 
-        assert _exists(self.cligen52), "Cannot find cligen52 executable"
-        assert _exists(self.cligen52), "Cannot find cligen43 executable"
+        assert _exists(self.cligen532), "Cannot find cligen532 executable"
+        assert _exists(self.cligen43), "Cannot find cligen43 executable"
 
     def run_multiple_year(self, years, cli_fname='wepp.cli',
                           localization=None, verbose=False):
