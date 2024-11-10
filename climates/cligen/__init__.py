@@ -14,6 +14,8 @@ from os.path import join as _join
 from os.path import exists as _exists
 from os.path import split as _split
 
+from concurrent.futures import ThreadPoolExecutor
+
 import datetime
 
 from subprocess import (
@@ -988,66 +990,44 @@ class Station:
         return self.ppts * self.nwds
     
     def prism_mod(self, lng, lat):
-        return self.localize(lng, lat, p_mean='prism', tmax='prism', tmin='prism')
+        # Function definitions for concurrent execution
+        def get_prism_ppt():
+            return get_prism_monthly_ppt(lng, lat, units='inch') / self.nwds
         
-    def localize(self, lng, lat,
-                 p_mean=None,
-                 p_std=None,
-                 p_skew=None,
-                 tmax=None,
-                 tmin=None,
-                 dewpoint=None,
-                 solrad=None,
-                 interp_method='near'):
-
-        """
-        This could is deprecated and the localization provided by
-        wepppy.climates.prism.prism_mod
-        """
+        def get_prism_tmax():
+            return get_prism_monthly_tmax(lng, lat, units='f')
+        
+        def get_prism_tmin():
+            return get_prism_monthly_tmin(lng, lat, units='f')
+        
+        # Use ThreadPoolExecutor for concurrent execution
+        with ThreadPoolExecutor() as executor:
+            future_ppt = executor.submit(get_prism_ppt)
+            future_tmax = executor.submit(get_prism_tmax)
+            future_tmin = executor.submit(get_prism_tmin)
+            
+            # Retrieve the results when they are ready
+            prism_ppts = future_ppt.result()
+            tmaxs = future_tmax.result()
+            tmins = future_tmin.result()
+            
+        return self.mod(prism_ppts, tmaxs, tmins)
+    
+    def mod(self, ppts, tmaxs, tmins):
         new = deepcopy(self)
-
-        if p_mean == 'prism':
-            prism_ppts = get_prism_monthly_ppt(lng, lat, units='inch', method=interp_method)
-            ppts = prism_ppts / self.nwds
-            new.lines[3] = ' MEAN P  ' + _row_formatter(ppts) + '\r\n'
-
-        elif p_mean == 'daymet':
-            prism_ppts = get_daymet_prcp_mean(lng, lat, units='inch', method=interp_method)
-            ppts = prism_ppt = self.nwds
-            new.lines[3] = ' MEAN P  ' + _row_formatter(ppts) + '\r\n'
-
-        else:
-            prism_ppts = None
-
-        if p_std == 'daymet':
-            p_stds = get_daymet_prcp_std(lng, lat, units='inch', method=interp_method)
-            new.lines[4] = ' S DEV P ' + _row_formatter(p_stds) + '\r\n'
-
-        if p_skew == 'daymet':
-            p_skew = get_daymet_prcp_skew(lng, lat, units='inch', method=interp_method)
-            new.lines[5] = ' SKEW P  ' + _row_formatter(p_skew) + '\r\n'
-
-        if tmax == 'prism':
-            tmaxs = get_prism_monthly_tmax(lng, lat, units='f', method=interp_method)
+        
+        if tmaxs is not None:
             new.lines[8] = ' TMAX AV ' + _row_formatter(tmaxs) + '\r\n'
-
-        if tmin == 'prism':
-            tmins = get_prism_monthly_tmin(lng, lat, units='f', method=interp_method)
+            
+        if tmins is not None:
             new.lines[9] = ' TMIN AV ' + _row_formatter(tmins) + '\r\n'
-
-        if solrad == 'daymet':
-            slrds = get_daymet_srld_mean(lng, lat, method=interp_method)
-            new.lines[12] = ' SOL.RAD ' + _row_formatter(slrds) + '\r\n'
-
-        if dewpoint == 'prism':
-            tdmeans = get_prism_monthly_tdmean(lng, lat, units='f', methoed=interp_method)
-            new.lines[15] = ' DEW PT  ' + _row_formatter(tdmeans) + '\r\n'
-
-        if prism_ppts is not None:
+            
+        if ppts is not None:
+            new.lines[3] = ' MEAN P  ' + _row_formatter(ppts) + '\r\n'
             par_monthlies = self.ppts * self.nwds
 
             station_nwds = days_in_mo * (self.pwds / (1.0 - self.pwws + self.pwds))
-            delta = prism_ppts / par_monthlies
+            delta = ppts / par_monthlies
             nwds = [float(v)for v in station_nwds]
 
             # clamp between 50% and 200% of original value
