@@ -954,6 +954,12 @@ class Station:
         assert 'TMIN' in lines[9]
         assert 'P(W/W)' in lines[6]
         assert 'P(W/D)' in lines[7]
+        
+        self.lines = lines
+        self._calc_monthlies()
+
+    def _calc_monthlies(self):
+        lines = self.lines
 
         self.ppts = np.array([float(lines[3][-73:][i * 6:i * 6 + 6]) for i in range(12)])
         self.pstds = np.array([float(lines[4][-73:][i * 6:i * 6 + 6]) for i in range(12)])
@@ -980,17 +986,18 @@ class Station:
     @property
     def monthly_ppts(self):
         return self.ppts * self.nwds
-
+    
+    def prism_mod(self, lng, lat):
+        return self.localize(lng, lat, p_mean='prism', tmax='prism', tmin='prism')
+        
     def localize(self, lng, lat,
-                 p_mean='prism',
-                 p_std='daymet',
-                 p_skew='daymet',
-                 p_ww='daymet',
-                 p_wd='daymet',
-                 tmax='prism',
-                 tmin='prism',
-                 dewpoint='prism',
-                 solrad='daymet',
+                 p_mean=None,
+                 p_std=None,
+                 p_skew=None,
+                 tmax=None,
+                 tmin=None,
+                 dewpoint=None,
+                 solrad=None,
                  interp_method='near'):
 
         """
@@ -1075,11 +1082,25 @@ class Station:
             new.lines[6] = ' P(W/W)  ' + _row_formatter(p_wws) + '\r\n'
             new.lines[7] = ' P(W/D)  ' + _row_formatter(p_wds) + '\r\n'
 
+        new._calc_monthlies()
         return new
+
+    @property
+    def contents(self):
+        return ''.join(self.lines)
 
     def write(self, fn):
         with open(fn, 'w') as fp:
-            fp.write(''.join(self.lines))
+            fp.write(self.contents)
+            
+    def get_monthlies(self):
+        return {
+                "ppts": list(self.ppts),
+                "nwds": list(self.nwds),
+                "tmaxs": list(self.tmaxs),
+                "tmins": list(self.tmins),
+                "cumulative_ppts": np.sum(v * d for v, d in zip(self.ppts, self.nwds)
+            }
 
 
 class StationMeta:
@@ -1425,7 +1446,7 @@ class Cligen:
         assert _exists(wd), 'Working dir does not exist'
         self.wd = wd
 
-        assert isinstance(station, StationMeta), "station is not a StationMeta object"
+        assert isinstance(station, Station), "station is not a Station object"
         self.station = station
 
         self.cliver = cliver
@@ -1446,27 +1467,10 @@ class Cligen:
 
         assert cli_fname.endswith('.cli')
 
-        station_meta = self.station
-
-        if localization is None:
-            # no prism adjustment is specified
-            # just copy the par into the working directory
-            par_fn = _join(self.wd, station_meta.par)
-            shutil.copyfile(station_meta.parpath, par_fn)
-        else:
-            # adjust based on lng, lat
-            lng, lat = localization
-            assert lng >= -125.0208333
-            assert lng <= -66.4791667
-            assert lat >= 24.0625000
-            assert lat <= 49.9375000
-
-            station = station_meta.get_station()
-            new_station = station.localize(lng, lat)
-
-            par_fn = '%s.%s.par' % (station_meta.par[:-4], cli_fname[:-4])
-            par_fn = _join(self.wd, par_fn)
-            new_station.write(par_fn)
+        station = self.station
+        
+        par_fn = _join(self.wd, cli_fname[:-4] + ".par")
+        station.write(par_fn)
 
         assert _exists(par_fn)
         _, par = os.path.split(par_fn)
