@@ -1099,7 +1099,7 @@ class Station:
                 "nwds": list(self.nwds),
                 "tmaxs": list(self.tmaxs),
                 "tmins": list(self.tmins),
-                "cumulative_ppts": np.sum(v * d for v, d in zip(self.ppts, self.nwds)
+                "cumulative_ppts": np.sum(v * d for v, d in zip(self.ppts, self.nwds))
             }
 
 
