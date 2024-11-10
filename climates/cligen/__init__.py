@@ -1013,7 +1013,7 @@ class Station:
             
         return self.mod(prism_ppts, tmaxs, tmins)
     
-    def mod(self, ppts, tmaxs, tmins, description):
+    def mod(self, ppts, tmaxs, tmins):
         new = deepcopy(self)
         
         if tmaxs is not None:
