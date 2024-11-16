@@ -400,7 +400,7 @@ class ClimateFile(object):
         self.lines = lines
         self.header = header
         self.colnames = colnames
-
+        
     @property
     def is_single_storm(self) -> bool:
         breakpoint = self.breakpoint
@@ -446,6 +446,26 @@ class ClimateFile(object):
             d = {name: dtype(v) for dtype, name, v in zip(dtypes, colnames, row)}
             cur_date = datetime.date(d['year'], d['mo'], d['da'])
             return cur_date
+        
+    def selected_years_filter(self, selected_years):
+        assert not self.breakpoint, "selected_years_filter only works with breakpoint files"
+        
+        data0line = self.data0line
+        
+        data = []
+        
+        for i, L in enumerate(self.lines[data0line:]):
+            row = [v.strip() for v in L.split()]
+            if L.strip() == '':
+                break
+
+            assert len(row) == len(self.colnames), (row, self.colnames, L)
+            
+            year = int(row[2])
+            if year in selected_years:
+                data.append(L)
+                
+        self.lines = self.lines[:data0line] + data
 
     def clip(self, start_date: datetime.date, end_date: datetime.date):
 
