@@ -426,6 +426,20 @@ class ClimateFile(object):
         return count == 1
 
     @property
+    def is_monsoonal(self):
+        monthlies = self.calc_monthlies()
+        ppts = monthlies['ppts']
+        obannual = sum(ppts)
+        obJAS = sum(ppts[6:9])
+        pctJAS = 0
+        if obannual > 0.00001:
+            pctJAS = 100 * obJAS / obannual
+            pctJAS = round(pctJAS, 2)
+            if obannual < 600 and pctJAS > 30:
+                return True
+        return False
+    
+    @property
     def last_date(self) -> datetime.date:
 
         colnames = self.colnames
