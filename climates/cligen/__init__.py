@@ -1119,7 +1119,7 @@ class Station:
 
 class StationMeta:
     def __init__(self, state, desc, par, latitude, longitude, years, _type,
-                 elevation, tp5, tp6, _distance=None):
+                 elevation, tp5, tp6, annual_ppt, _distance=None):
 
         par0, par1 = _split(par)
         self.state = state
@@ -1131,6 +1131,7 @@ class StationMeta:
         self.elevation = elevation
         self.tp5 = tp5
         self.tp6 = tp6
+        self.annual_ppt = annual_ppt
         self.distance = None
         self.lat_distance = None
         self.rank = None
