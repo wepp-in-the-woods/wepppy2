@@ -1157,7 +1157,6 @@ class StationMeta:
         self.distance = haversine(location, (self.longitude, self.latitude))
 
     def as_dict(self, include_monthlies=False):
-
         d = {
             "state": self.state,
             "desc": self.desc,
@@ -1169,6 +1168,7 @@ class StationMeta:
             "elevation": self.elevation,
             "tp5": self.tp5,
             "tp6": self.tp6,
+            "annual_ppt": self.annual_ppt,
             "distance_to_query_location": self.distance,
             "rank_based_on_query_location": self.rank,
             "id": self.id
