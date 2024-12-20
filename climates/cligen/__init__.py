@@ -10,6 +10,7 @@ from typing import Union
 from collections.abc import Iterable
 
 import os
+import json
 from os.path import join as _join
 from os.path import exists as _exists
 from os.path import split as _split
@@ -63,7 +64,7 @@ from wepppy2.climates.metquery_client import (
 
 
 _thisdir = os.path.dirname(__file__)
-_db = _join(_thisdir, '2015_stations.db')
+_db = None
 _stations_dir = _join(_thisdir, '2015_par_files')
 _bin_dir = _join(_thisdir, 'bin')
 
@@ -1141,6 +1142,7 @@ class StationMeta:
         self.desc = desc.split(str(self.id))[0].strip()
 
         if par0 == '':
+            # not entirely sure if this is needed
             self.parpath = _join(_stations_dir, par)
         else:
             self.parpath = par
@@ -1229,12 +1231,15 @@ class StationMeta:
 
 
 
+
 class CligenStationsManager:
-    def __init__(self, version=None):
+    def __init__(self, version=None, bbox=None):
+        """
+        bbox: ul_x, ul_y, lr_x, lr_y
+        """
+        global _stations_dir, _db
 
         # connect to sqlite3 db
-        global _db, _stations_dir
-        
         _db = None
         _db_dir = _join(_thisdir, 'db')
 
@@ -1257,9 +1262,25 @@ class CligenStationsManager:
 
         # load station meta data
         self.stations = []
-        c.execute("SELECT * FROM stations")
+        if bbox is None:
+            c.execute("SELECT * FROM stations")
+        else:
+            ul_x, ul_y, lr_x, lr_y = bbox
+            assert lr_x > ul_x, (ul_x, lr_x)
+            assert ul_y > lr_y, (ul_y, lr_y)
+            query = """SELECT * FROM stations WHERE latitude BETWEEN ? AND ? AND longitude BETWEEN ? AND ?;"""
+            c.execute(query, (lr_y, ul_y, ul_x,  lr_x, ))
+            
         for row in c:
             self.stations.append(StationMeta(*row))
+            
+        # read this table
+        self.states = {}
+        c.execute("SELECT * FROM states")
+        for row in c:
+            self.states[row[0]] = row[1]
+        
+        conn.close()
 
     def order_by_distance_to_location(self, location):
         """
@@ -1455,6 +1476,38 @@ class CligenStationsManager:
             _stations[-1].calculate_lat_distance(location[1])
         return _stations
 
+    def export_to_geojson(self, geojson_fn):
+        geojson = self.to_geojson()
+        
+        with open(geojson_fn, "w") as f:
+            json.dump(geojson, f, indent=2)
+
+    def to_geojson(self):
+        """
+        Convert the stations to a GeoJSON file.
+        
+        Args:
+            geojson_fn (str): The output GeoJSON file name.
+        """
+        features = []
+        for station in self.stations:
+            feature = {
+                "type": "Feature",
+                "geometry": {
+                    "type": "Point",
+                    "coordinates": [station.longitude, station.latitude]
+                },
+                "properties": {k:v for k,v in station.as_dict().items() if v is not None}
+            }
+            features.append(feature)
+        
+        geojson = {
+            "type": "FeatureCollection",
+            "features": features
+        }
+        
+        return geojson
+    
 
 class Cligen:
     def __init__(self, station, wd='./', cliver="5.3.2"):
