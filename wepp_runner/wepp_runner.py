@@ -103,15 +103,14 @@ Y
 ../output/{ss_batch_key}/H{wepp_id}.pass.dat"""
 
 
-def make_flowpath_run(fp, wepp_id, sim_years, runs_dir):
+def make_flowpath_run(fp, wepp_id, sim_years, fp_runs_dir):
     _fp_template = flowpath_template_loader()
 
     s = _fp_template.format(fp=fp,
                             wepp_id=wepp_id,
-                            runs_dir=os.path.abspath(runs_dir),
                             sim_years=sim_years)
 
-    fn = _join(runs_dir, f'{fp}.run')
+    fn = _join(fp_runs_dir, f'{fp}.run')
     with open(fn, 'w') as fp:
         fp.write(s)
 
@@ -240,13 +239,13 @@ def run_flowpath(fp_id, wepp_id, runs_dir, fp_runs_dir, wepp_bin=None, status_ch
     _run = open(_join(fp_runs_dir, f'{fp_id}.run'))
     _log = open(_join(fp_runs_dir, f'{fp_id}.err'), 'w')
 
-    p = subprocess.Popen(cmd, stdin=_run, stdout=_log, stderr=_log, cwd=runs_dir)
+    p = subprocess.Popen(cmd, stdin=_run, stdout=_log, stderr=_log, cwd=fp_runs_dir)
     p.wait()
     _run.close()
     _log.close()
 
     log_fn = _join(fp_runs_dir, f'{fp_id}.err')
-    sucess = False
+    success = False
     with open(log_fn) as fp:
         lines = fp.readlines()
         for L in lines:
