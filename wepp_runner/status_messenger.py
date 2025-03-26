@@ -7,7 +7,11 @@ _thisdir = os.path.dirname(__file__)
 load_dotenv(_join(_thisdir, '.env'))
 REDIS_HOST = os.environ.get('REDIS_HOST', 'localhost')
 
+
 class StatusMessenger:
+    """
+    This class is used to publish messages to a redis channel.
+    """
     _client = None
     _redis_config = {
         'host': REDIS_HOST,
@@ -25,6 +29,9 @@ class StatusMessenger:
 
     @classmethod
     def publish(cls, channel, message):
+        """
+        Publish a message to a redis channel.
+        """
         # Use the lazy-initialized client for publishing messages
         return cls._get_client().publish(channel, message)
 

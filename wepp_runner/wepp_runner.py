@@ -89,6 +89,13 @@ def ss_batch_watershed_template_loader():
     return _template_loader("ss_batch_watershed.template")
 
 
+
+def hillstub_omni_contrasts_template_loader():
+    return """
+M
+Y
+{wepp_id_path}.pass.dat"""
+
 def hillstub_template_loader():
     return """
 M
@@ -125,40 +132,70 @@ def make_ss_flowpath_run(fp, wepp_id, runs_dir):
         fp.write(s)
 
 
-def make_hillslope_run(wepp_id, sim_years, runs_dir, reveg=True):
+def make_hillslope_run(wepp_id, sim_years, runs_dir, reveg=True, omni=False):
     if reveg:
         _hill_template = reveg_hill_template_loader()
     else:
         _hill_template = hill_template_loader()
 
+    cli_dir = ''
+    slp_dir = ''
+
+    if omni:
+        cli_dir = '../../../../../wepp/runs/'
+        slp_dir = '../../../../../wepp/runs/'
+
     s = _hill_template.format(wepp_id=wepp_id,
-                              sim_years=sim_years)
+                              sim_years=sim_years,
+                              cli_dir=cli_dir,
+                              slp_dir=slp_dir)
 
     fn = _join(runs_dir, f'p{wepp_id}.run')
     with open(fn, 'w') as fp:
         fp.write(s)
 
 
-def make_ss_hillslope_run(wepp_id, runs_dir):
+def make_ss_hillslope_run(wepp_id, runs_dir, omni=False):
     _hill_template = ss_hill_template_loader()
 
-    s = _hill_template.format(wepp_id=wepp_id)
+    cli_dir = ''
+    slp_dir = ''
+
+    if omni:
+        cli_dir = '../../../../../wepp/runs/'
+        slp_dir = '../../../../../wepp/runs/'
+
+    s = _hill_template.format(wepp_id=wepp_id, 
+                              cli_dir=cli_dir,
+                              slp_dir=slp_dir)
 
     fn = _join(runs_dir, f'p{wepp_id}.run')
     with open(fn, 'w') as fp:
         fp.write(s)
 
-def make_ss_batch_hillslope_run(wepp_id, runs_dir, ss_batch_key, ss_batch_id):
+
+def make_ss_batch_hillslope_run(wepp_id, runs_dir, ss_batch_key, ss_batch_id, omni=False):
     _hill_template = ss_batch_hill_template_loader()
 
-    s = _hill_template.format(wepp_id=wepp_id, ss_batch_id=ss_batch_id, ss_batch_key=ss_batch_key)
+    cli_dir = ''
+    slp_dir = ''
+
+    if omni:
+        cli_dir = '../../../../../wepp/runs/'
+        slp_dir = '../../../../../wepp/runs/'
+
+    s = _hill_template.format(wepp_id=wepp_id,
+                              ss_batch_id=ss_batch_id,
+                              ss_batch_key=ss_batch_key,
+                              cli_dir=cli_dir,
+                              slp_dir=slp_dir)
 
     fn = _join(runs_dir, f'p{wepp_id}.{ss_batch_id}.run')
     with open(fn, 'w') as fp:
         fp.write(s)
 
 
-def run_ss_batch_hillslope(wepp_id, runs_dir, wepp_bin=None, ss_batch_id=None, status_channel=None):
+def run_ss_batch_hillslope(wepp_id, runs_dir, wepp_bin=None, ss_batch_id=None, status_channel=None, omni=False):
     assert ss_batch_id is not None
     t0 = time()
 
@@ -168,12 +205,18 @@ def run_ss_batch_hillslope(wepp_id, runs_dir, wepp_bin=None, ss_batch_id=None, s
         cmd = [os.path.abspath(_wepp)]
 
     assert _exists(_join(runs_dir, f'p{wepp_id}.man'))
-    assert _exists(_join(runs_dir, f'p{wepp_id}.slp'))
     assert _exists(_join(runs_dir, f'p{wepp_id}.sol'))
-    assert _exists(_join(runs_dir, f'p{wepp_id}.{ss_batch_id}.cli'))
+
+    if omni:
+        assert _exists(_join(runs_dir, '../../../../../wepp/runs', f'p{wepp_id}.slp'))
+        assert _exists(_join(runs_dir, '../../../../../wepp/runs', f'p{wepp_id}.{ss_batch_id}.cli'))
+    else:
+        assert _exists(_join(runs_dir, f'p{wepp_id}.slp'))
+        assert _exists(_join(runs_dir, f'p{wepp_id}.{ss_batch_id}.cli'))
 
     _run = open(_join(runs_dir, f'p{wepp_id}.{ss_batch_id}.run'))
     _stderr_fn = _join(runs_dir, f'p{wepp_id}.{ss_batch_id}.err')
+
     _log = open(_stderr_fn, 'w')
 
     p = subprocess.Popen(cmd, stdin=_run, stdout=_log, stderr=_log, cwd=runs_dir)
@@ -192,7 +235,7 @@ def run_ss_batch_hillslope(wepp_id, runs_dir, wepp_bin=None, ss_batch_id=None, s
                     % (wepp_id, log_fn))
 
 
-def run_hillslope(wepp_id, runs_dir, wepp_bin=None, status_channel=None):
+def run_hillslope(wepp_id, runs_dir, wepp_bin=None, status_channel=None, omni=False):
     t0 = time()
 
     if wepp_bin is not None:
@@ -201,9 +244,14 @@ def run_hillslope(wepp_id, runs_dir, wepp_bin=None, status_channel=None):
         cmd = [os.path.abspath(_wepp)]
 
     assert _exists(_join(runs_dir, f'p{wepp_id}.man'))
-    assert _exists(_join(runs_dir, f'p{wepp_id}.slp'))
-    assert _exists(_join(runs_dir, f'p{wepp_id}.cli'))
     assert _exists(_join(runs_dir, f'p{wepp_id}.sol'))
+
+    if omni:
+        assert _exists(_join(runs_dir, '../../../../../wepp/runs', f'p{wepp_id}.slp'))
+        assert _exists(_join(runs_dir, '../../../../../wepp/runs', f'p{wepp_id}.cli'))
+    else:
+        assert _exists(_join(runs_dir, f'p{wepp_id}.slp')), omni
+        assert _exists(_join(runs_dir, f'p{wepp_id}.cli'))
 
     _run = open(_join(runs_dir, f'p{wepp_id}.run'))
     _log = open(_join(runs_dir, f'p{wepp_id}.err'), 'w')
@@ -264,6 +312,25 @@ def run_flowpath(fp_id, wepp_id, runs_dir, fp_runs_dir, wepp_bin=None, status_ch
 
     raise Exception(f'Error running wepp for {fp_id}\nSee {log_fn}')
 
+
+def make_watershed_omni_contrasts_run(sim_years, wepp_path_ids, runs_dir):
+
+    block = []
+    for wepp_path_id in wepp_path_ids:
+        block.append(hillstub_omni_contrasts_template_loader().format(wepp_id_path=wepp_path_id))
+    block = ''.join(block)
+
+    _watershed_template = watershed_template_loader()
+
+    s = _watershed_template.format(sub_n=len(wepp_path_ids),
+                                   hillslopes_block=block,
+                                   sim_years=sim_years)
+
+    fn = _join(runs_dir, 'pw0.run')
+    with open(fn, 'w') as fp:
+        fp.write(s)
+
+    
 
 def make_watershed_run(sim_years, wepp_ids, runs_dir):
 

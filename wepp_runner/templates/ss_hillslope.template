@@ -14,7 +14,7 @@ Yes                             # element output
 No                              # final summary output
 No                              # daily winter output
 p{wepp_id}.man                  # management file
-p{wepp_id}.slp                  # slope file
-p{wepp_id}.cli                  # climate file
+{slp_dir}p{wepp_id}.slp                  # slope file
+{cli_dir}p{wepp_id}.cli                  # climate file
 p{wepp_id}.sol                  # soil file
 0                               # irrigation option, 0=no irrigation
