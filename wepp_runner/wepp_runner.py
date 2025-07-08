@@ -32,7 +32,7 @@ linux_wepp_bin_opts = glob(_join(wepp_bin_dir, "wepp_*"))
 linux_wepp_bin_opts = [_split(p)[1] for p in linux_wepp_bin_opts]
 linux_wepp_bin_opts = [p for p in linux_wepp_bin_opts if '.' not in p]
 linux_wepp_bin_opts.append('latest')
-
+linux_wepp_bin_opts.sort()
 
 if IS_WINDOWS:
     _wepp = _join(wepp_bin_dir, "wepp2014.exe")
