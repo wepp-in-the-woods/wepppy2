@@ -286,25 +286,45 @@ def run_ss_batch_hillslope(wepp_id, runs_dir, wepp_bin=None, ss_batch_id=None, s
     assert _exists(_join(runs_dir, cli_relpath, f'p{wepp_id}.{ss_batch_id}.cli'))
     assert _exists(_join(runs_dir, sol_relpath, f'p{wepp_id}.sol'))
 
-    _run = open(_join(runs_dir, f'p{wepp_id}.{ss_batch_id}.run'))
     _stderr_fn = _join(runs_dir, f'p{wepp_id}.{ss_batch_id}.err')
-
+    _run = open(_join(runs_dir, f'p{wepp_id}.{ss_batch_id}.run'))
     _log = open(_stderr_fn, 'w')
+    success = False
 
-    p = subprocess.Popen(cmd, stdin=_run, stdout=_log, stderr=_log, cwd=runs_dir)
-    p.wait()
-    _run.close()
-    _log.close()
+    try:
+        p = subprocess.Popen(
+            cmd,
+            stdin=_run,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            cwd=runs_dir,
+            universal_newlines=True,
+        )
 
-    log_fn = _stderr_fn
-    with open(log_fn) as fp:
-        lines = fp.readlines()
-        for L in lines:
-            if 'WEPP COMPLETED HILLSLOPE SIMULATION SUCCESSFULLY' in L:
-                return True, wepp_id, time() - t0
+        while True:
+            output = p.stdout.readline()
+            if output == '' and p.poll() is not None:
+                break
+
+            output = output.strip()
+            if output:
+                if 'WEPP COMPLETED HILLSLOPE SIMULATION SUCCESSFULLY' in output:
+                    success = True
+                _log.write(output + '\n')
+                _log.flush()
+
+        p.wait()
+        if p.stdout is not None:
+            p.stdout.close()
+    finally:
+        _run.close()
+        _log.close()
+
+    if success:
+        return True, wepp_id, time() - t0
 
     raise Exception('Error running wepp for wepp_id %i\nSee %s'
-                    % (wepp_id, log_fn))
+                    % (wepp_id, _stderr_fn))
 
 
 def run_hillslope(wepp_id, runs_dir, wepp_bin=None, status_channel=None,
@@ -333,22 +353,44 @@ def run_hillslope(wepp_id, runs_dir, wepp_bin=None, status_channel=None,
     assert _exists(_join(runs_dir, cli_relpath, f'p{wepp_id}.cli'))
     assert _exists(_join(runs_dir, sol_relpath, f'p{wepp_id}.sol'))
 
+    _stderr_fn = _join(runs_dir, f'p{wepp_id}.err')
     _run = open(_join(runs_dir, f'p{wepp_id}.run'))
-    _log = open(_join(runs_dir, f'p{wepp_id}.err'), 'w')
+    _log = open(_stderr_fn, 'w')
+    success = False
 
-    p = subprocess.Popen(cmd, stdin=_run, stdout=_log, stderr=_log, cwd=runs_dir)
-    p.wait()
-    _run.close()
-    _log.close()
+    try:
+        p = subprocess.Popen(
+            cmd,
+            stdin=_run,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            cwd=runs_dir,
+            universal_newlines=True,
+        )
 
-    log_fn = _join(runs_dir, f'p{wepp_id}.err')
-    with open(log_fn) as fp:
-        lines = fp.readlines()
-        for L in lines:
-            if 'WEPP COMPLETED HILLSLOPE SIMULATION SUCCESSFULLY' in L:
-                return True, wepp_id, time() - t0
+        while True:
+            output = p.stdout.readline()
+            if output == '' and p.poll() is not None:
+                break
 
-    raise Exception(f'Error running wepp for wepp_id {wepp_id}\nSee {log_fn}')
+            output = output.strip()
+            if output:
+                if 'WEPP COMPLETED HILLSLOPE SIMULATION SUCCESSFULLY' in output:
+                    success = True
+                _log.write(output + '\n')
+                _log.flush()
+
+        p.wait()
+        if p.stdout is not None:
+            p.stdout.close()
+    finally:
+        _run.close()
+        _log.close()
+
+    if success:
+        return True, wepp_id, time() - t0
+
+    raise Exception(f'Error running wepp for wepp_id {wepp_id}\nSee {_stderr_fn}')
 
 
 def run_flowpath(fp_id, wepp_id, runs_dir, fp_runs_dir, wepp_bin=None, status_channel=None):
@@ -364,21 +406,39 @@ def run_flowpath(fp_id, wepp_id, runs_dir, fp_runs_dir, wepp_bin=None, status_ch
     assert _exists(_join(runs_dir, f'p{wepp_id}.cli'))
     assert _exists(_join(runs_dir, f'p{wepp_id}.sol'))
 
+    _stderr_fn = _join(fp_runs_dir, f'{fp_id}.err')
     _run = open(_join(fp_runs_dir, f'{fp_id}.run'))
-    _log = open(_join(fp_runs_dir, f'{fp_id}.err'), 'w')
-
-    p = subprocess.Popen(cmd, stdin=_run, stdout=_log, stderr=_log, cwd=fp_runs_dir)
-    p.wait()
-    _run.close()
-    _log.close()
-
-    log_fn = _join(fp_runs_dir, f'{fp_id}.err')
+    _log = open(_stderr_fn, 'w')
     success = False
-    with open(log_fn) as fp:
-        lines = fp.readlines()
-        for L in lines:
-            if 'WEPP COMPLETED HILLSLOPE SIMULATION SUCCESSFULLY' in L:
-                success = True
+
+    try:
+        p = subprocess.Popen(
+            cmd,
+            stdin=_run,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            cwd=fp_runs_dir,
+            universal_newlines=True,
+        )
+
+        while True:
+            output = p.stdout.readline()
+            if output == '' and p.poll() is not None:
+                break
+
+            output = output.strip()
+            if output:
+                if 'WEPP COMPLETED HILLSLOPE SIMULATION SUCCESSFULLY' in output:
+                    success = True
+                _log.write(output + '\n')
+                _log.flush()
+
+        p.wait()
+        if p.stdout is not None:
+            p.stdout.close()
+    finally:
+        _run.close()
+        _log.close()
 
     if success:
         #os.remove(_join(fp_runs_dir, f'{fp_id}.slp'))
@@ -387,10 +447,10 @@ def run_flowpath(fp_id, wepp_id, runs_dir, fp_runs_dir, wepp_bin=None, status_ch
             os.remove(_join(fp_runs_dir, f'{fp_id}.loss.dat'))
         if _exists(_join(fp_runs_dir, f'{fp_id}.single_event.dat')):
             os.remove(_join(fp_runs_dir, f'{fp_id}.single_event.dat'))
-        os.remove(_join(fp_runs_dir, f'{fp_id}.err'))
+        os.remove(_stderr_fn)
         return True, fp_id, time() - t0
 
-    raise Exception(f'Error running wepp for {fp_id}\nSee {log_fn}')
+    raise Exception(f'Error running wepp for {fp_id}\nSee {_stderr_fn}')
 
 
 def make_watershed_omni_contrasts_run(sim_years, wepp_path_ids, runs_dir):
@@ -529,19 +589,42 @@ def run_ss_batch_watershed(runs_dir, wepp_bin=None, ss_batch_id=None, status_cha
     assert _exists(_join(runs_dir, 'pw0.sol'))
     assert _exists(_join(runs_dir, f'pw0.{ss_batch_id}.run'))
 
-    _run = open(_join(runs_dir, f'pw0.{ss_batch_id}.run'))
     _stderr_fn = _join(runs_dir, f'pw0.{ss_batch_id}.err')
+    _run = open(_join(runs_dir, f'pw0.{ss_batch_id}.run'))
     _log = open(_stderr_fn, 'w')
+    success = False
 
-    p = subprocess.Popen(cmd, stdin=_run, stdout=_log, stderr=_log, cwd=runs_dir)
-    p.wait()
-    _run.close()
-    _log.close()
+    try:
+        p = subprocess.Popen(
+            cmd,
+            stdin=_run,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            cwd=runs_dir,
+            universal_newlines=True,
+        )
 
-    with open(_stderr_fn) as fp:
-        stdout = fp.read()
-        if 'WEPP COMPLETED WATERSHED SIMULATION SUCCESSFULLY' in stdout:
-            return True, time() - t0
+        while True:
+            output = p.stdout.readline()
+            if output == '' and p.poll() is not None:
+                break
+
+            output = output.strip()
+            if output:
+                if 'WEPP COMPLETED WATERSHED SIMULATION SUCCESSFULLY' in output:
+                    success = True
+                _log.write(output + '\n')
+                _log.flush()
+
+        p.wait()
+        if p.stdout is not None:
+            p.stdout.close()
+    finally:
+        _run.close()
+        _log.close()
+
+    if success:
+        return True, time() - t0
 
     runs_dir = os.path.abspath(runs_dir)
     _runs_dir = runs_dir.split(os.sep)
