@@ -1,4 +1,4 @@
-`wepp_runner` a Python wrapper for running WEPP simulations.
+# `wepp_runner` a Python wrapper for running WEPP simulations.
 
 ============================================================================
 
