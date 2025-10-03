@@ -20,6 +20,9 @@ with continuous, single storm (ss), and batch single storm (ss_batch) climates.
 3. generate the watershed .run file using one of the `make*_watershed_run` functions
 4. run the watershed simulation using `run_watershed` or `run_ss_batch_watershed`
 
+The module is implemented in a manner that allows for parallel execution of the hillslope simulations
+using the `concurrent.futures.ThreadPoolExecutor`
+
 ### Flowpaths
 support for continuous and single storm flowpath simulations
 flowpaths are independent from the hillslope/watershed simulations and WEPP does not support watershed 
@@ -56,6 +59,7 @@ from .status_messenger import StatusMessenger
 
 __all__ = [
     "wepp_bin_dir",
+    "linux_wepp_bin_opts",
     "make_flowpath_run",
     "make_ss_flowpath_run",
     "make_hillslope_run",
@@ -79,11 +83,12 @@ _template_dir = _join(_thisdir, "templates")
 
 wepp_bin_dir = os.path.abspath(_join(_thisdir, "bin"))
 
-_linux_wepp_bin_opts = glob(_join(wepp_bin_dir, "wepp_*"))
-_linux_wepp_bin_opts = [_split(p)[1] for p in _linux_wepp_bin_opts]
-_linux_wepp_bin_opts = [p for p in _linux_wepp_bin_opts if '.' not in p]
-_linux_wepp_bin_opts.append('latest')
-_linux_wepp_bin_opts.sort()
+# this is a list of available linux wepp binaries that can be specified for wepp_bin argument
+linux_wepp_bin_opts = glob(_join(wepp_bin_dir, "wepp_*"))
+linux_wepp_bin_opts = [_split(p)[1] for p in linux_wepp_bin_opts]
+linux_wepp_bin_opts = [p for p in linux_wepp_bin_opts if '.' not in p]
+linux_wepp_bin_opts = [p for p in linux_wepp_bin_opts if not p.endswith('_hill')]
+linux_wepp_bin_opts.sort()
 
 if _IS_WINDOWS:
     _wepp = _join(wepp_bin_dir, "wepp2014.exe")
@@ -277,7 +282,10 @@ def run_ss_batch_hillslope(wepp_id, runs_dir, wepp_bin=None, ss_batch_id=None, s
     t0 = time()
 
     if wepp_bin is not None:
-        cmd = [os.path.abspath(_join(wepp_bin_dir, wepp_bin))]
+        if _exists(os.path.abspath(_join(wepp_bin_dir, f'{wepp_bin}_hill'))):
+            cmd = [os.path.abspath(_join(wepp_bin_dir, f'{wepp_bin}_hill'))]
+        else:
+            cmd = [os.path.abspath(_join(wepp_bin_dir, wepp_bin))]
     else:
         cmd = [os.path.abspath(_wepp)]
 
@@ -341,7 +349,10 @@ def run_hillslope(wepp_id, runs_dir, wepp_bin=None, status_channel=None,
     t0 = time()
 
     if wepp_bin is not None:
-        cmd = [os.path.abspath(_join(wepp_bin_dir, wepp_bin))]
+        if _exists(os.path.abspath(_join(wepp_bin_dir, f'{wepp_bin}_hill'))):
+            cmd = [os.path.abspath(_join(wepp_bin_dir, f'{wepp_bin}_hill'))]
+        else:
+            cmd = [os.path.abspath(_join(wepp_bin_dir, wepp_bin))]
     else:
         cmd = [os.path.abspath(_wepp)]
 
@@ -397,7 +408,10 @@ def run_flowpath(fp_id, wepp_id, runs_dir, fp_runs_dir, wepp_bin=None, status_ch
     t0 = time()
 
     if wepp_bin is not None:
-        cmd = [os.path.abspath(_join(wepp_bin_dir, wepp_bin))]
+        if _exists(os.path.abspath(_join(wepp_bin_dir, f'{wepp_bin}_hill'))):
+            cmd = [os.path.abspath(_join(wepp_bin_dir, f'{wepp_bin}_hill'))]
+        else:
+            cmd = [os.path.abspath(_join(wepp_bin_dir, wepp_bin))]
     else:
         cmd = [os.path.abspath(_wepp)]
 
