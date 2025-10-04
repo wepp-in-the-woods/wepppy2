@@ -191,13 +191,13 @@ def make_ss_flowpath_run(fp, wepp_id, runs_dir):
 def make_hillslope_run(wepp_id, sim_years, runs_dir, reveg=True,
                        man_relpath='', cli_relpath='', slp_relpath='', sol_relpath=''):
     
-    if man_relpath is not '':
+    if man_relpath != '':
         assert man_relpath.endswith('/'), man_relpath
-    if cli_relpath is not '':
+    if cli_relpath != '':
         assert cli_relpath.endswith('/'), cli_relpath
-    if slp_relpath is not '':
+    if slp_relpath != '':
         assert slp_relpath.endswith('/'), slp_relpath
-    if sol_relpath is not '':
+    if sol_relpath != '':
         assert sol_relpath.endswith('/'), sol_relpath
     
     if reveg:
@@ -219,13 +219,13 @@ def make_hillslope_run(wepp_id, sim_years, runs_dir, reveg=True,
 
 def make_ss_hillslope_run(wepp_id, runs_dir,
                        man_relpath='', cli_relpath='', slp_relpath='', sol_relpath=''):
-    if man_relpath is not '':
+    if man_relpath != '':
         assert man_relpath.endswith('/'), man_relpath
-    if cli_relpath is not '':
+    if cli_relpath != '':
         assert cli_relpath.endswith('/'), cli_relpath
-    if slp_relpath is not '':
+    if slp_relpath != '':
         assert slp_relpath.endswith('/'), slp_relpath
-    if sol_relpath is not '':
+    if sol_relpath != '':
         assert sol_relpath.endswith('/'), sol_relpath
 
     _hill_template = _ss_hill_template_loader()
@@ -243,13 +243,13 @@ def make_ss_hillslope_run(wepp_id, runs_dir,
 
 def make_ss_batch_hillslope_run(wepp_id, runs_dir, ss_batch_key, ss_batch_id,
                        man_relpath='', cli_relpath='', slp_relpath='', sol_relpath=''):
-    if man_relpath is not '':
+    if man_relpath != '':
         assert man_relpath.endswith('/'), man_relpath
-    if cli_relpath is not '':
+    if cli_relpath != '':
         assert cli_relpath.endswith('/'), cli_relpath
-    if slp_relpath is not '':
+    if slp_relpath != '':
         assert slp_relpath.endswith('/'), slp_relpath
-    if sol_relpath is not '':
+    if sol_relpath != '':
         assert sol_relpath.endswith('/'), sol_relpath
 
     _hill_template = _ss_batch_hill_template_loader()
@@ -269,13 +269,13 @@ def make_ss_batch_hillslope_run(wepp_id, runs_dir, ss_batch_key, ss_batch_id,
 
 def run_ss_batch_hillslope(wepp_id, runs_dir, wepp_bin=None, ss_batch_id=None, status_channel=None, 
                        man_relpath='', cli_relpath='', slp_relpath='', sol_relpath=''):
-    if man_relpath is not '':
+    if man_relpath != '':
         assert man_relpath.endswith('/'), man_relpath
-    if cli_relpath is not '':
+    if cli_relpath != '':
         assert cli_relpath.endswith('/'), cli_relpath
-    if slp_relpath is not '':
+    if slp_relpath != '':
         assert slp_relpath.endswith('/'), slp_relpath
-    if sol_relpath is not '':
+    if sol_relpath != '':
         assert sol_relpath.endswith('/'), sol_relpath
 
     assert ss_batch_id is not None
@@ -337,13 +337,13 @@ def run_ss_batch_hillslope(wepp_id, runs_dir, wepp_bin=None, ss_batch_id=None, s
 
 def run_hillslope(wepp_id, runs_dir, wepp_bin=None, status_channel=None,
                   man_relpath='', cli_relpath='', slp_relpath='', sol_relpath=''):
-    if man_relpath is not '':
+    if man_relpath != '':
         assert man_relpath.endswith('/'), man_relpath
-    if cli_relpath is not '':
+    if cli_relpath != '':
         assert cli_relpath.endswith('/'), cli_relpath
-    if slp_relpath is not '':
+    if slp_relpath != '':
         assert slp_relpath.endswith('/'), slp_relpath
-    if sol_relpath is not '':
+    if sol_relpath != '':
         assert sol_relpath.endswith('/'), sol_relpath
 
     t0 = time()
