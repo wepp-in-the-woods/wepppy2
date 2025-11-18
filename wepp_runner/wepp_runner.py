@@ -336,7 +336,9 @@ def run_ss_batch_hillslope(wepp_id, runs_dir, wepp_bin=None, ss_batch_id=None, s
 
 
 def run_hillslope(wepp_id, runs_dir, wepp_bin=None, status_channel=None,
-                  man_relpath='', cli_relpath='', slp_relpath='', sol_relpath=''):
+                  man_relpath='', cli_relpath='', slp_relpath='', sol_relpath='',
+                  no_file_checks=False):
+    
     if man_relpath != '':
         assert man_relpath.endswith('/'), man_relpath
     if cli_relpath != '':
@@ -356,13 +358,14 @@ def run_hillslope(wepp_id, runs_dir, wepp_bin=None, status_channel=None,
     else:
         cmd = [os.path.abspath(_wepp)]
 
-    assert _exists(_join(runs_dir, f'p{wepp_id}.man'))
-    assert _exists(_join(runs_dir, f'p{wepp_id}.sol'))
+    if not no_file_checks:
+        assert _exists(_join(runs_dir, f'p{wepp_id}.man'))
+        assert _exists(_join(runs_dir, f'p{wepp_id}.sol'))
 
-    assert _exists(_join(runs_dir, man_relpath, f'p{wepp_id}.man'))
-    assert _exists(_join(runs_dir, slp_relpath, f'p{wepp_id}.slp'))
-    assert _exists(_join(runs_dir, cli_relpath, f'p{wepp_id}.cli'))
-    assert _exists(_join(runs_dir, sol_relpath, f'p{wepp_id}.sol'))
+        assert _exists(_join(runs_dir, man_relpath, f'p{wepp_id}.man'))
+        assert _exists(_join(runs_dir, slp_relpath, f'p{wepp_id}.slp'))
+        assert _exists(_join(runs_dir, cli_relpath, f'p{wepp_id}.cli'))
+        assert _exists(_join(runs_dir, sol_relpath, f'p{wepp_id}.sol'))
 
     _stderr_fn = _join(runs_dir, f'p{wepp_id}.err')
     _run = open(_join(runs_dir, f'p{wepp_id}.run'))
