@@ -60,6 +60,7 @@ from .status_messenger import StatusMessenger
 __all__ = [
     "wepp_bin_dir",
     "linux_wepp_bin_opts",
+    "get_linux_wepp_bin_opts",
     "make_flowpath_run",
     "make_ss_flowpath_run",
     "make_hillslope_run",
@@ -83,13 +84,22 @@ _template_dir = _join(_thisdir, "templates")
 
 wepp_bin_dir = os.path.abspath(_join(_thisdir, "bin"))
 
+def _compute_linux_wepp_bin_opts():
+    opts = glob(_join(wepp_bin_dir, "wepp_*"))
+    opts = [_split(p)[1] for p in opts]
+    opts = [p for p in opts if '.' not in p]
+    opts = [p for p in opts if not p.endswith('_hill')]
+    opts.append('latest')
+    opts.sort()
+    return opts
+
 # this is a list of available linux wepp binaries that can be specified for wepp_bin argument
-linux_wepp_bin_opts = glob(_join(wepp_bin_dir, "wepp_*"))
-linux_wepp_bin_opts = [_split(p)[1] for p in linux_wepp_bin_opts]
-linux_wepp_bin_opts = [p for p in linux_wepp_bin_opts if '.' not in p]
-linux_wepp_bin_opts = [p for p in linux_wepp_bin_opts if not p.endswith('_hill')]
-linux_wepp_bin_opts.append('latest')
-linux_wepp_bin_opts.sort()
+linux_wepp_bin_opts = _compute_linux_wepp_bin_opts()
+
+
+def get_linux_wepp_bin_opts():
+    """Return the current linux WEPP binaries available on disk."""
+    return _compute_linux_wepp_bin_opts()
 
 if _IS_WINDOWS:
     _wepp = _join(wepp_bin_dir, "wepp2014.exe")
@@ -338,7 +348,7 @@ def run_ss_batch_hillslope(wepp_id, runs_dir, wepp_bin=None, ss_batch_id=None, s
 
 def run_hillslope(wepp_id, runs_dir, wepp_bin=None, status_channel=None,
                   man_relpath='', cli_relpath='', slp_relpath='', sol_relpath='',
-                  no_file_checks=False):
+                  no_file_checks=False, timeout=30):
     
     if man_relpath != '':
         assert man_relpath.endswith('/'), man_relpath
@@ -372,6 +382,7 @@ def run_hillslope(wepp_id, runs_dir, wepp_bin=None, status_channel=None,
     _run = open(_join(runs_dir, f'p{wepp_id}.run'))
     _log = open(_stderr_fn, 'w')
     success = False
+    stdout_data = ""
 
     try:
         p = subprocess.Popen(
@@ -383,21 +394,26 @@ def run_hillslope(wepp_id, runs_dir, wepp_bin=None, status_channel=None,
             universal_newlines=True,
         )
 
-        while True:
-            output = p.stdout.readline()
-            if output == '' and p.poll() is not None:
-                break
+        try:
+            stdout_data, _ = p.communicate(timeout=timeout)
+        except subprocess.TimeoutExpired as exc:
+            p.kill()
+            stdout_data, _ = p.communicate()
+            for output in stdout_data.splitlines():
+                output = output.strip()
+                if output:
+                    _log.write(output + '\n')
+            raise TimeoutError(
+                f'Hillslope simulation for wepp_id {wepp_id} exceeded {timeout} seconds'
+            ) from exc
 
+        for output in stdout_data.splitlines():
             output = output.strip()
             if output:
                 if 'WEPP COMPLETED HILLSLOPE SIMULATION SUCCESSFULLY' in output:
                     success = True
                 _log.write(output + '\n')
                 _log.flush()
-
-        p.wait()
-        if p.stdout is not None:
-            p.stdout.close()
     finally:
         _run.close()
         _log.close()
