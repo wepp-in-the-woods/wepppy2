@@ -394,18 +394,15 @@ def run_hillslope(wepp_id, runs_dir, wepp_bin=None, status_channel=None,
             universal_newlines=True,
         )
 
+        timed_out = False
+        timeout_exc = None
         try:
             stdout_data, _ = p.communicate(timeout=timeout)
         except subprocess.TimeoutExpired as exc:
+            timed_out = True
+            timeout_exc = exc
             p.kill()
             stdout_data, _ = p.communicate()
-            for output in stdout_data.splitlines():
-                output = output.strip()
-                if output:
-                    _log.write(output + '\n')
-            raise TimeoutError(
-                f'Hillslope simulation for wepp_id {wepp_id} exceeded {timeout} seconds'
-            ) from exc
 
         for output in stdout_data.splitlines():
             output = output.strip()
@@ -414,6 +411,11 @@ def run_hillslope(wepp_id, runs_dir, wepp_bin=None, status_channel=None,
                     success = True
                 _log.write(output + '\n')
                 _log.flush()
+
+        if timed_out and not success:
+            raise TimeoutError(
+                f'Hillslope simulation for wepp_id {wepp_id} exceeded {timeout} seconds'
+            ) from timeout_exc
     finally:
         _run.close()
         _log.close()
